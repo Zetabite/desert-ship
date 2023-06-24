@@ -7,17 +7,16 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import zetabite.desertship.DesertShip;
 
 import java.util.Iterator;
 import java.util.List;
 
 public abstract class CaravanUtil {
-	private static List<MobEntity> getHeldEntities(Entity holderEntity) {
+	public static <E extends Entity> List<MobEntity> getHeldEntities(E holderEntity) {
 		return getHeldEntities(holderEntity, 7.0);
 	}
 
-	private static List<MobEntity> getHeldEntities(Entity holderEntity, double radius) {
+	public static <E extends Entity>  List<MobEntity> getHeldEntities(E holderEntity, double radius) {
 		Vec3d pos = holderEntity.getPos();
 		int x = (int) pos.getX();
 		int y = (int) pos.getY();
@@ -49,7 +48,6 @@ public abstract class CaravanUtil {
 
 	public static <E extends Entity> boolean onTryLeashAttach(E entity, PlayerEntity player, Hand hand) {
 		if (entity instanceof CamelEntity camel) {
-			DesertShip.LOGGER.info("Fetching player held Entities");
 			List<MobEntity> pHeldEntities = getHeldEntities(player);
 
 			if (pHeldEntities.size() == 1 && pHeldEntities.get(0) instanceof CamelEntity otherCamel) {
@@ -74,11 +72,12 @@ public abstract class CaravanUtil {
 	}
 
 	public static <E extends Entity> boolean onTryLeashDetach(E entity, PlayerEntity player, Hand hand) {
-		if (entity instanceof MobEntity mob) {
-			return false;
+		if (entity instanceof CamelEntity camel) {
+			if (camel.getHoldingEntity() instanceof CamelEntity) {
+				camel.detachLeash(true, true);
+				return true;
+			}
 		}
-		//this.detachLeash(true, true);
-		//this.goalSelector.disableControl(Goal.Control.MOVE);
 		return false;
 	}
 

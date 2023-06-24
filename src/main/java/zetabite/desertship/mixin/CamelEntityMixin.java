@@ -1,7 +1,6 @@
 package zetabite.desertship.mixin;
 
 import net.minecraft.block.Blocks;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.data.DataTracker;

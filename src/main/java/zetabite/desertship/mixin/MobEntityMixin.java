@@ -16,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import zetabite.desertship.duckinterface.MobEntityDuckInterface;
 
-import static zetabite.desertship.util.CaravanUtil.isCaravanQualified;
 import static zetabite.desertship.util.CaravanUtil.onTryLeashAttach;
 
 @Mixin(MobEntity.class)
