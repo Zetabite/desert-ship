@@ -1,4 +1,4 @@
-package zetabite.desertship;
+package zetabite.desertship.duckinterface;
 
 public interface CamelEntityDuckInterface {
 	boolean hasChest();

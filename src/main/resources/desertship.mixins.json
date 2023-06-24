@@ -4,6 +4,7 @@
 	"package": "zetabite.desertship.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
+    "MobEntityMixin",
     "CamelEntityMixin",
     "HorseScreenHandlerMixin"
   ],

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import zetabite.desertship.CamelEntityDuckInterface;
+import zetabite.desertship.duckinterface.CamelEntityDuckInterface;
 
 @Mixin(HorseScreenHandler.class)
 public abstract class HorseScreenHandlerMixin extends ScreenHandler {

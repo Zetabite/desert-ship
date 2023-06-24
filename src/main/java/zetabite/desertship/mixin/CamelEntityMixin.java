@@ -1,7 +1,9 @@
 package zetabite.desertship.mixin;
 
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.ai.goal.Goal;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
@@ -17,14 +19,19 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import zetabite.desertship.CamelEntityDuckInterface;
+import zetabite.desertship.duckinterface.CamelEntityDuckInterface;
 
+import static zetabite.desertship.util.CaravanUtil.onTryLeashDetach;
+
+@Debug(export = true)
 @Mixin(CamelEntity.class)
 public abstract class CamelEntityMixin extends HorseBaseEntity implements CamelEntityDuckInterface {
 	private static final TrackedData<Boolean> CHEST = DataTracker.registerData(CamelEntityMixin.class, TrackedDataHandlerRegistry.BOOLEAN);
@@ -85,28 +92,24 @@ public abstract class CamelEntityMixin extends HorseBaseEntity implements CamelE
 		at = @At("HEAD"),
 		cancellable = true
 	)
-	public void desertship$interactMobWithChest(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
+	public void desertship$interactMob(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
 		ItemStack itemStack = player.getStackInHand(hand);
 
 		if (player.shouldCancelInteraction() && !this.isBaby()) {
-			this.openInventory(player);
-			cir.setReturnValue(ActionResult.success(this.getWorld().isClient));
-		} else {
-			ActionResult actionResult = itemStack.useOnEntity(player, this, hand);
-
-			if (actionResult.isAccepted()) {
-				cir.setReturnValue(actionResult);
-			} else if (this.isBreedingItem(itemStack)) {
-				cir.setReturnValue(this.interactHorse(player, itemStack));
-			} else if(!itemStack.isEmpty() && !this.hasChest() && itemStack.isOf(Items.CHEST)) {
-				this.addChest(player, itemStack);
-			} else {
-				if (this.getPassengerList().size() < 2 && !this.isBaby()) {
-					this.putPlayerOnBack(player);
+			if(this.isLeashed() && player.isSneaking() && itemStack.isEmpty()) {
+				if (onTryLeashDetach(this, player, hand)) {
+					cir.setReturnValue(ActionResult.success(this.getWorld().isClient));
 				}
 			}
-			cir.setReturnValue(ActionResult.success(this.getWorld().isClient));
+			this.openInventory(player);
+		} else if (this.isBreedingItem(itemStack)) {
+			cir.setReturnValue(this.interactHorse(player, itemStack));
+		} else if(!itemStack.isEmpty() && !this.hasChest() && itemStack.isOf(Items.CHEST)) {
+			this.addChest(player, itemStack);
+		} else if (this.getPassengerList().size() < 2 && !this.isBaby()) {
+			this.putPlayerOnBack(player);
 		}
+		cir.setReturnValue(ActionResult.success(this.getWorld().isClient));
 	}
 
 	public boolean hasChest() {
@@ -183,5 +186,38 @@ public abstract class CamelEntityMixin extends HorseBaseEntity implements CamelE
 
 	public int getInventoryColumns() {
 		return 5;
+	}
+
+	@Override
+	protected void updateLeash() {
+		if (this.getHoldingEntity() instanceof CamelEntity holdingCamel) {
+			if (!this.isAlive() || !holdingCamel.isAlive()) {
+				this.detachLeash(true, true);
+				return;
+			}
+
+			if (holdingCamel.getWorld() == this.getWorld()) {
+				this.setPositionTarget(holdingCamel.getBlockPos(), 5);
+				float f = this.distanceTo(holdingCamel);
+				this.updateForLeashLength(f);
+
+				if (f > 6.0F) {
+					double d = (holdingCamel.getX() - this.getX()) / (double)f;
+					double e = (holdingCamel.getY() - this.getY()) / (double)f;
+					double g = (holdingCamel.getZ() - this.getZ()) / (double)f;
+					this.setVelocity(this.getVelocity().add(Math.copySign(d * d * 0.4, d), Math.copySign(e * e * 0.4, e), Math.copySign(g * g * 0.4, g)));
+					this.limitFallDistance();
+				} else if (this.runsFromLeash()) {
+					this.goalSelector.enableControl(Goal.Control.MOVE);
+					float h = 2.0F;
+					Vec3d vec3d = new Vec3d(holdingCamel.getX() - this.getX(), holdingCamel.getY() - this.getY(), holdingCamel.getZ() - this.getZ())
+						.normalize()
+						.multiply(Math.max(f - h, 0.0F));
+					this.getNavigation().startMovingTo(this.getX() + vec3d.x, this.getY() + vec3d.y, this.getZ() + vec3d.z, this.getRunFromLeashSpeed());
+				}
+			}
+		} else {
+			super.updateLeash();
+		}
 	}
 }
