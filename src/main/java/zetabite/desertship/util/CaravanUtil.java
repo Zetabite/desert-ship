@@ -9,22 +9,21 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import zetabite.desertship.DesertShip;
 
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public abstract class CaravanUtil {
-	private static ArrayList<MobEntity> getHeldEntities(Entity holderEntity) {
+	private static List<MobEntity> getHeldEntities(Entity holderEntity) {
 		return getHeldEntities(holderEntity, 7.0);
 	}
 
-	private static ArrayList<MobEntity> getHeldEntities(Entity holderEntity, double radius) {
+	private static List<MobEntity> getHeldEntities(Entity holderEntity, double radius) {
 		Vec3d pos = holderEntity.getPos();
 		int x = (int) pos.getX();
 		int y = (int) pos.getY();
 		int z = (int) pos.getZ();
 
-		ArrayList<MobEntity> heldEntities = new ArrayList<>();
-
-		for(MobEntity mobEntity : holderEntity.getWorld().getNonSpectatingEntities(
+		List<MobEntity> heldEntities = holderEntity.getWorld().getNonSpectatingEntities(
 			MobEntity.class,
 			new Box(
 				(double)x - radius,
@@ -33,58 +32,44 @@ public abstract class CaravanUtil {
 				(double)x + radius,
 				(double)y + radius,
 				(double)z + radius)
-		)) {
-			if (mobEntity.getHoldingEntity() == holderEntity) {
-				heldEntities.add(mobEntity);
+		);
+
+		Iterator itr = heldEntities.iterator();
+
+		while (itr.hasNext()) {
+			if (itr.next() instanceof MobEntity mobEntity) {
+				if (mobEntity.getHoldingEntity() == holderEntity) {
+					continue;
+				}
 			}
+			itr.remove();
 		}
 		return heldEntities;
 	}
 
 	public static <E extends Entity> boolean onTryLeashAttach(E entity, PlayerEntity player, Hand hand) {
-		if (entity instanceof MobEntity mob) {
+		if (entity instanceof CamelEntity camel) {
 			DesertShip.LOGGER.info("Fetching player held Entities");
-			ArrayList<MobEntity> pHeldEntities = getHeldEntities(player);
+			List<MobEntity> pHeldEntities = getHeldEntities(player);
 
 			if (pHeldEntities.size() == 1 && pHeldEntities.get(0) instanceof CamelEntity otherCamel) {
-				DesertShip.LOGGER.info("Fetching this held Entities");
-				ArrayList<MobEntity> cHeldEntities = getHeldEntities(mob);
-				DesertShip.LOGGER.info("Fetching other held Entities");
-				ArrayList<MobEntity> oHeldEntities = getHeldEntities(otherCamel);
+				List<MobEntity> cHeldEntities = getHeldEntities(camel);
+				List<MobEntity> oHeldEntities = getHeldEntities(otherCamel);
 
 				// this helds camel
 				if (oHeldEntities.size() == 0 && cHeldEntities.size() <= 1) {
-					DesertShip.LOGGER.info("this camel secondary, other camel main");
 					otherCamel.detachLeash(true, false);
-					mob.attachLeash(otherCamel, true);
+					camel.attachLeash(otherCamel, true);
 					return true;
-					//mob.goalSelector.enableControl(Goal.Control.MOVE);
 				}
 				// if other or neither helds camels
 				else if (cHeldEntities.size() == 0 && oHeldEntities.size() == 1) {
-					DesertShip.LOGGER.info("other camel secondary, this camel main");
 					otherCamel.detachLeash(true, false);
-					otherCamel.attachLeash(mob, true);
+					otherCamel.attachLeash(camel, true);
 					return true;
 				}
 			}
 		}
-		// Pseudo Code
-		/*
-		 * pList = player.heldEntities();
-		 * if (pList.size() == 1 && pList.get(0) instanceof CamelEntity otherCamel) {
-		 * 	// Camel is holding already, the new camel will be main
-		 * 	if (camel.heldEntity() instanceof CamelEntity heldCamel) {
-		 * 		otherCamel.setHoldingEntity(this);
-		 * 	}
-		 * 	// Is not already holding, becomes secondary
-		 * 	else {
-		 * 		this.setHoldingEntity(otherCamel);
-		 * 	}
-		 * }
-		 */
-		//this.attachLeash(player, true);
-		//this.goalSelector.enableControl(Goal.Control.MOVE);
 		return false;
 	}
 
