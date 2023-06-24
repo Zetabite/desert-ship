@@ -37,7 +37,7 @@ public abstract class HorseScreenMixin extends HandledScreen<HorseScreenHandler>
 		int j = (this.height - this.backgroundHeight) / 2;
 
 		if (this.entity instanceof CamelEntity camel && ((CamelEntityDuckInterface)camel).hasChest()) {
-			graphics.drawTexture(this.TEXTURE, i + 79, j + 17, 0, this.backgroundHeight, ((CamelEntityDuckInterface)camel).getInventoryColumns() * 18, 54);
+			graphics.drawTexture(TEXTURE, i + 79, j + 17, 0, this.backgroundHeight, ((CamelEntityDuckInterface)camel).getInventoryColumns() * 18, 54);
 		}
 	}
 }

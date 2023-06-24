@@ -23,17 +23,23 @@ public abstract class HorseScreenHandlerMixin extends ScreenHandler {
 	}
 
 	private boolean hasChestCamel(HorseBaseEntity horse) {
-		return (horse instanceof CamelEntity && ((CamelEntityDuckInterface)horse).hasChest());
+		if (horse instanceof CamelEntity camel) {
+			return ((CamelEntityDuckInterface)camel).hasChest();
+		}
+		return false;
 	}
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	public void desertship$setCamelChestSlots(int syncId, PlayerInventory playerInventory, Inventory inventory, final HorseBaseEntity entity, CallbackInfo ci) {
 		if (this.hasChestCamel(entity)) {
 			int inventoryColumns = ((CamelEntityDuckInterface)entity).getInventoryColumns();
+			int inventoryRows = ((CamelEntityDuckInterface)entity).getInventoryRows();
 
-			for(int k = 0; k < 3; ++k) {
-				for(int l = 0; l < inventoryColumns; ++l) {
-					this.addSlot(new Slot(inventory, 2 + l + k * inventoryColumns, 80 + l * 18, 18 + k * 18));
+			for(int row = 0; row < inventoryRows; row++) {
+				for(int column = 0; column < inventoryColumns; column++) {
+					this.addSlot(
+						new Slot(inventory, CamelEntity.INVENTORY_BASE_SIZE + column + row * inventoryColumns, 80 + column * 18, 18 + row * 18)
+					);
 				}
 			}
 		}

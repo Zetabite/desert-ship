@@ -5,13 +5,17 @@ import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.CamelEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import zetabite.desertship.DesertShip;
 
 import java.util.Iterator;
 import java.util.List;
 
 public abstract class CaravanUtil {
+	public static final Identifier CHESTED_CAMEL_PACKET_ID = new Identifier(DesertShip.MODID, "camel_chest");
+	public static final float MAX_LEASH_LENGTH = 6.0F;
 	public static <E extends Entity> List<MobEntity> getHeldEntities(E holderEntity) {
 		return getHeldEntities(holderEntity, 7.0);
 	}
